@@ -49,6 +49,18 @@
 #include "threads.h"
 #include "yuv_io.h"
 
+
+//add some profiling value to estimate time of some tools like dct
+double DCT_32X32_real_time __attribute__ ((visibility ("default"))) = 0 ;
+double DCT_16x16_real_time __attribute__ ((visibility ("default"))) = 0 ;
+double DCT_8x8_real_time __attribute__ ((visibility ("default"))) = 0 ;
+double DCT_4x4_real_time __attribute__ ((visibility ("default"))) = 0 ;
+
+long count_4x4 __attribute__ ((visibility ("default"))) = 0;
+long count_8x8 __attribute__ ((visibility ("default")))= 0 ;
+long count_16x16 __attribute__ ((visibility ("default"))) = 0 ;
+long count_32x32 __attribute__ ((visibility ("default"))) = 0 ;
+//---------------------------------------------------------------------
 /**
  * \brief Open a file for reading.
  *
@@ -632,8 +644,20 @@ int main(int argc, char *argv[])
     fprintf(stderr, " Total CPU time: %.3f s.\n", ((float)(clock() - start_time)) / CLOCKS_PER_SEC);
 
     {
+      double total_DCT_time = DCT_4x4_real_time + DCT_8x8_real_time + DCT_16x16_real_time + DCT_32X32_real_time;
       double encoding_time = ( (double)(encoding_end_cpu_time - encoding_start_cpu_time) ) / (double) CLOCKS_PER_SEC;
       double wall_time = KVZ_CLOCK_T_AS_DOUBLE(encoding_end_real_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_start_real_time);
+      fprintf(stderr, " DCT 32X32 wall time: %.3f ms.\n", DCT_32X32_real_time * 1000);
+      fprintf(stderr, " DCT 16X16 wall time: %.3f ms.\n", DCT_16x16_real_time * 1000);
+      fprintf(stderr, " DCT 8X8 wall time: %.3f ms.\n", DCT_8x8_real_time * 1000);
+      fprintf(stderr, " DCT 4X4 wall time: %.3f ms.\n", DCT_4x4_real_time * 1000);
+      fprintf(stderr, " Total DCT wall time: %.3f s.\n", DCT_4x4_real_time + DCT_8x8_real_time + DCT_16x16_real_time + DCT_32X32_real_time);
+      fprintf(stderr, " DCT 32X32 calling number : %ld.\n", count_32x32);
+      fprintf(stderr, " DCT 16X16 calling number: %ld.\n", count_16x16);
+      fprintf(stderr, " DCT 8X8 calling number: %ld.\n", count_8x8);
+      fprintf(stderr, " DCT 4X4 calling number: %ld.\n", count_4x4);
+      fprintf(stderr, " total DCT calling number: %ld.\n",count_32x32 + count_16x16 + count_8x8 + count_4x4);
+      //----------------------------------------------------------------------
       fprintf(stderr, " Encoding time: %.3f s.\n", encoding_time);
       fprintf(stderr, " Encoding wall time: %.3f s.\n", wall_time);
       fprintf(stderr, " Encoding CPU usage: %.2f%%\n", encoding_time/wall_time*100.f);

@@ -23,6 +23,19 @@
 #include "strategyselector.h"
 #include "tables.h"
 
+#include "threads.h"
+//------------------------------------
+extern double DCT_32X32_real_time;
+extern double DCT_16x16_real_time;
+extern double DCT_8x8_real_time;
+extern double DCT_4x4_real_time;
+
+
+extern long count_4x4;
+extern long count_8x8;
+extern long count_16x16;
+extern long count_32x32;
+//------------------------------------
 const int16_t kvz_g_dst_4[4][4] =
 {
   { 29, 55, 74, 84 },
@@ -248,6 +261,11 @@ static void partial_butterfly_4_generic(const short *src, short *dst,
   int32_t add = 1 << (shift - 1);
   const int32_t line = 4;
 
+  count_4x4++;
+  KVZ_CLOCK_T encoding_DCT_start_time;
+  KVZ_CLOCK_T encoding_DCT_end_time;
+  KVZ_GET_TIME(&encoding_DCT_start_time);
+
   for (j = 0; j < line; j++) {
     // E and O
     e[0] = src[0] + src[3];
@@ -263,6 +281,8 @@ static void partial_butterfly_4_generic(const short *src, short *dst,
     src += 4;
     dst++;
   }
+  KVZ_GET_TIME(&encoding_DCT_end_time);
+  DCT_4x4_real_time +=  KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_end_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_start_time);
 }
 
 
@@ -302,6 +322,11 @@ static void partial_butterfly_8_generic(const short *src, short *dst,
   int32_t add = 1 << (shift - 1);
   const int32_t line = 8;
 
+  count_8x8++;
+  KVZ_CLOCK_T encoding_DCT_start_time;
+  KVZ_CLOCK_T encoding_DCT_end_time;
+  KVZ_GET_TIME(&encoding_DCT_start_time);
+
   for (j = 0; j < line; j++) {
     // E and O
     for (k = 0; k < 4; k++) {
@@ -327,6 +352,8 @@ static void partial_butterfly_8_generic(const short *src, short *dst,
     src += 8;
     dst++;
   }
+  KVZ_GET_TIME(&encoding_DCT_end_time);
+      DCT_8x8_real_time +=  KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_end_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_start_time);
 }
 
 
@@ -374,6 +401,10 @@ static void partial_butterfly_16_generic(const short *src, short *dst,
   int32_t eee[2], eeo[2];
   int32_t add = 1 << (shift - 1);
   const int32_t line = 16;
+  count_16x16++;
+  KVZ_CLOCK_T encoding_DCT_start_time;
+  KVZ_CLOCK_T encoding_DCT_end_time;
+  KVZ_GET_TIME(&encoding_DCT_start_time);
 
   for (j = 0; j < line; j++) {
     // E and O
@@ -409,6 +440,8 @@ static void partial_butterfly_16_generic(const short *src, short *dst,
     src += 16;
     dst++;
   }
+  KVZ_GET_TIME(&encoding_DCT_end_time);
+     DCT_16x16_real_time +=  KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_end_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_start_time);
 }
 
 
@@ -465,7 +498,10 @@ static void partial_butterfly_32_generic(const short *src, short *dst,
   int32_t eeee[2], eeeo[2];
   int32_t add = 1 << (shift - 1);
   const int32_t line = 32;
-
+  count_32x32++;
+  KVZ_CLOCK_T encoding_DCT_start_time;
+  KVZ_CLOCK_T encoding_DCT_end_time;
+  KVZ_GET_TIME(&encoding_DCT_start_time);
   for (j = 0; j < line; j++) {
     // E and O
     for (k = 0; k < 16; k++) {
@@ -508,6 +544,8 @@ static void partial_butterfly_32_generic(const short *src, short *dst,
     src += 32;
     dst++;
   }
+  KVZ_GET_TIME(&encoding_DCT_end_time);
+  DCT_32X32_real_time +=  KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_end_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_start_time);
 }
 
 
