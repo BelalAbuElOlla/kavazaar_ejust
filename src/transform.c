@@ -28,6 +28,23 @@
 #include "strategies/strategies-picture.h"
 #include "tables.h"
 
+#include "xdct.h"
+#if HW_TYPE == HW_16X16_2D
+
+//#include "ximage_filter.c"
+//#include "ximage_filter_linux.c"
+
+#include "xdct.c"
+#include "xdct_linux.c"
+
+XDct doDCT;
+u64 *src_base_address;
+
+#include <threads.h>//
+extern double DCT_16x16_real_time;
+extern long count_16x16;
+#endif
+
 /**
  * \brief RDPCM direction.
  */
@@ -186,6 +203,70 @@ void kvz_itransformskip(const encoder_control_t * const encoder, int16_t *block,
  * \param coeff transform coefficients
  * \param block_size width of transform
  */
+#if (HW_TYPE == HW_32X32) || (HW_TYPE == HW_4X4_2D) || (HW_TYPE == HW_16X16_2D)
+#if HW_TYPE == HW_32X32
+const char name[] = "partial_butterfly_32_generic_TRY";
+#elif HW_TYPE == HW_4X4_2D
+const char name[] = "partial_butterfly_4_generic";
+#elif HW_TYPE == HW_16X16_2D
+const char name[] = "dct";
+#endif
+int DCT_2D_HW_init(void)
+{
+	//int i, j;
+	int status;
+	//int shift_1st = 1;
+	//int shift_2nd = 8;
+	//int getshift;
+	int fd_src;
+	unsigned int size;
+	//int16_t x[]={-16, -18, -18, -18,
+	//                -19, -20, -19, -19,
+	//                -21, -20, -19, -21,
+	//                -20, -19, -19, -20};
+	/* Step 1, open the UIO device file to allow access to control the device */
+
+	//fd_src = open("/dev/uio0", O_RDWR);
+	//if (fd_src < 1) {
+	//					printf("Unable to open UIO device file \n");
+	//					return -1;
+	//                }
+
+	fd_src = open("/dev/mem", O_RDWR| O_SYNC);
+	if (fd_src < 1) {
+		printf("Unable to open BRAM controller  \n");
+		return -1;
+	}
+
+
+	size = 0x8000;
+    off_t bram_1_pbase = 0xA0010000; // physical base address of BRAM 1   // SG_Mod
+
+
+	/* Step 4, map the device memory into the process address space so that it can be
+ 	 * accessed
+ 	 */
+
+	//src_base_address =        mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_src, 0);
+      src_base_address = (u64 *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_src, bram_1_pbase);    // SG_Mod
+	printf("Test DCT 16x16 HW \n");
+
+#if HW_TYPE == HW_32X32
+	status = XPartial_butterfly_32_generic_try_Initialize(&doDCT, (const char*)&name);
+#elif HW_TYPE == HW_4X4_2D
+	status = XPartial_butterfly_4_generic_Initialize(&doDCT, (const char*)&name);
+#elif HW_TYPE == HW_16X16_2D
+	status = XDct_Initialize(&doDCT, name);
+#endif
+	if(status != XST_SUCCESS)
+	{
+		printf("Error initializing DCT core \n");
+		return -1;
+	}
+	return 0;
+}
+
+#endif
 void kvz_transform2d(const encoder_control_t * const encoder,
                      int16_t *block,
                      int16_t *coeff,
@@ -196,6 +277,61 @@ void kvz_transform2d(const encoder_control_t * const encoder,
   dct_func *dct_func = kvz_get_dct_func(block_size, color, type);
   dct_func(encoder->bitdepth, block, coeff);
 }
+
+#if HW_TYPE == HW_16X16_2D
+void kvz_transform2d16X16_hw(int16_t *block, int16_t *coeff)
+{
+	  KVZ_CLOCK_T encoding_DCT_start_time;
+	  KVZ_CLOCK_T encoding_DCT_end_time;
+	  count_16x16++;
+		int i,j;
+		int32_t src[128];
+	    int32_t src_reg;
+		int16_t reg1;
+		int16_t reg0;
+		j=0;
+		for( i=0 ; i < 128 ; i++)
+		{
+			//65535 is decimal value of (0000ffff)
+			src[i] = ((block[j] & 65535) << 16) | (block[j+1] & 65535);
+			j += 2;
+		}
+		KVZ_GET_TIME(&encoding_DCT_start_time);
+	//	printf("b");
+	//	printf("\n");
+		//pthread_mutex_lock(&count_mutex);
+		for (i = 0; i < 128; i++) {
+			XDct_WriteReg(src_base_address,i,src[i]);
+		}
+//		memcpy(src_base_address,block,256);
+		//XPartial_butterfly_32_generic_try_Set_shift(&doDCT,shift);
+		XDct_Start(&doDCT);
+	//	printf("a ");
+	//	printf("\n");
+		while(!XDct_IsDone(&doDCT));
+	//	printf("d ");
+	//			printf("\n");
+//		for(i=0; i < 1024; i++)
+//			XDct_WriteReg(src_base_address,i,XDct_ReadReg(dst_base_address, i));
+//		}
+		j=0;
+		for(i=0; i < 128; i++)
+		{
+			src_reg = XDct_ReadReg(src_base_address, i);
+			reg1 = src_reg;
+			reg0 = src_reg >> 16;
+			coeff[j] = reg0;
+			coeff[j + 1] = reg1;
+			j += 2;
+		}
+//		memcpy(coeff,src_base_address,256);
+	//	printf("d ");
+	//	printf("\n");
+		//pthread_mutex_unlock(&count_mutex);
+		KVZ_GET_TIME(&encoding_DCT_end_time);
+		DCT_16x16_real_time +=  KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_end_time) - KVZ_CLOCK_T_AS_DOUBLE(encoding_DCT_start_time);
+}
+#endif
 
 void kvz_itransform2d(const encoder_control_t * const encoder,
                       int16_t *block,

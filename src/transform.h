@@ -50,6 +50,14 @@ void kvz_itransform2d(const encoder_control_t * const encoder,
                       int8_t block_size,
                       color_t color,
                       cu_type_t type);
+#include "config.h"
+#if HW_TYPE == HW_32X32
+void kvz_transform2d_hw(int16_t *block, int16_t *coeff);
+#elif HW_TYPE == HW_4X4_2D
+void kvz_transform2d4X4_hw(int16_t *block, int16_t *coeff);
+#elif HW_TYPE == HW_16X16_2D
+void kvz_transform2d16X16_hw(int16_t *block, int16_t *coeff);
+#endif
 
 int32_t kvz_get_scaled_qp(int8_t type, int8_t qp, int8_t qp_offset);
 

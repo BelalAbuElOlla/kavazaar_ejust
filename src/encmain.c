@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, " DCT 16X16 wall time: %.3f ms.\n", DCT_16x16_real_time * 1000);
       fprintf(stderr, " DCT 8X8 wall time: %.3f ms.\n", DCT_8x8_real_time * 1000);
       fprintf(stderr, " DCT 4X4 wall time: %.3f ms.\n", DCT_4x4_real_time * 1000);
-      fprintf(stderr, " Total DCT wall time: %.3f s.\n", DCT_4x4_real_time + DCT_8x8_real_time + DCT_16x16_real_time + DCT_32X32_real_time);
+      fprintf(stderr, " Total DCT wall time: %.3f s.\n", total_DCT_time);
       fprintf(stderr, " DCT 32X32 calling number : %ld.\n", count_32x32);
       fprintf(stderr, " DCT 16X16 calling number: %ld.\n", count_16x16);
       fprintf(stderr, " DCT 8X8 calling number: %ld.\n", count_8x8);
