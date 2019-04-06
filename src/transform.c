@@ -227,6 +227,7 @@ int DCT_2D_HW_init(void)
 	//					return -1;
 	//                }
 
+	printf("DCT Initiliaze \n");
 	fd_src = open("/dev/mem", O_RDWR| O_SYNC);
 	if (fd_src < 1) {
 		printf("Unable to open BRAM controller  \n");

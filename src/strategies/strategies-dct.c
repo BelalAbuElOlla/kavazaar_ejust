@@ -45,7 +45,14 @@ int kvz_strategy_register_dct(void* opaque, uint8_t bitdepth) {
   bool success = true;
 
   success &= kvz_strategy_register_dct_generic(opaque, bitdepth);
+#if  (HW_TYPE == HW_16X16_2D)
+  if(DCT_2D_HW_init() == -1 )
+    {
+  	  printf("Error initializing DCT core \n");
+  	  return false;
 
+    }
+#endif
   if (kvz_g_hardware_flags.intel_flags.avx2) {
     success &= kvz_strategy_register_dct_avx2(opaque, bitdepth);
   }
