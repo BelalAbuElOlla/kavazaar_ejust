@@ -212,20 +212,6 @@ int kvz_quantize_residual_generic(encoder_state_t *const state,
     kvz_transformskip(state->encoder_control, residual, coeff, width);
   }
   else {
-#if HW_TYPE == HW_32X32
-	  if(width == 32 )
-	  {
-		  kvz_transform2d_hw(residual, coeff);
-	  }
-	  else
-#endif
-#if HW_TYPE == HW_4X4_2D
-	  if(width == 4 )
-	  {
-		  kvz_transform2d4X4_hw(residual, coeff);
-	  }
-	  else
-#endif
 #if HW_TYPE == HW_16X16_2D
 	  if(width == 16 )
 	  {

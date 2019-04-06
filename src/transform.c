@@ -203,14 +203,9 @@ void kvz_itransformskip(const encoder_control_t * const encoder, int16_t *block,
  * \param coeff transform coefficients
  * \param block_size width of transform
  */
-#if (HW_TYPE == HW_32X32) || (HW_TYPE == HW_4X4_2D) || (HW_TYPE == HW_16X16_2D)
-#if HW_TYPE == HW_32X32
-const char name[] = "partial_butterfly_32_generic_TRY";
-#elif HW_TYPE == HW_4X4_2D
-const char name[] = "partial_butterfly_4_generic";
-#elif HW_TYPE == HW_16X16_2D
+#if HW_TYPE == HW_16X16_2D
 const char name[] = "dct";
-#endif
+
 int DCT_2D_HW_init(void)
 {
 	//int i, j;
@@ -250,14 +245,8 @@ int DCT_2D_HW_init(void)
 	//src_base_address =        mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_src, 0);
       src_base_address = (u64 *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_src, bram_1_pbase);    // SG_Mod
 	printf("Test DCT 16x16 HW \n");
-
-#if HW_TYPE == HW_32X32
-	status = XPartial_butterfly_32_generic_try_Initialize(&doDCT, (const char*)&name);
-#elif HW_TYPE == HW_4X4_2D
-	status = XPartial_butterfly_4_generic_Initialize(&doDCT, (const char*)&name);
-#elif HW_TYPE == HW_16X16_2D
 	status = XDct_Initialize(&doDCT, name);
-#endif
+
 	if(status != XST_SUCCESS)
 	{
 		printf("Error initializing DCT core \n");
